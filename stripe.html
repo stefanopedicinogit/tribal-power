@@ -1,0 +1,58 @@
+<html>
+  <head>
+    <script src="https://js.stripe.com/v3/"></script>
+  </head>
+  <body>
+    <form id="payment-form">
+      <label for="card-element">Credit or debit card</label>
+      <div id="card-element">
+        <!-- A Stripe Element will be inserted here. -->
+      </div>
+      <button id="submit">Submit Payment</button>
+      <p id="payment-status"></p>
+    </form>
+
+    <script>
+      // Set your publishable key
+      const stripe = Stripe('YOUR_PUBLISHABLE_KEY');
+
+      // Create a payment intent
+      const paymentIntent = stripe.paymentIntents.create({
+        amount: 1000,
+        currency: 'usd',
+        payment_method_types: ['card'],
+      });
+
+      // Confirm the payment
+      const cardElement = stripe.elements.create('card');
+      cardElement.mount('#card-element');
+
+      const form = document.getElementById('payment-form');
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const { paymentMethod, error } = await stripe.createPaymentMethod({
+          type: 'card',
+          card: cardElement,
+        });
+
+        if (error) {
+          // Handle error
+        } else {
+          const { clientSecret } = paymentIntent;
+          const { paymentMethodId } = paymentMethod;
+          stripe.confirmCardPayment(clientSecret, {
+            payment_method: paymentMethodId,
+          })
+            .then((result) => {
+              if (result.error) {
+                // Handle error
+              } else {
+                // Payment successful
+                document.getElementById('payment-status').textContent = 'Payment successful!';
+              }
+            });
+        }
+      });
+    </script>
+  </body>
+</html>
